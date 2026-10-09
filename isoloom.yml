@@ -1,0 +1,47 @@
+# yaml-language-server: $schema=https://www.isoloom.com/schema/v1.json
+# XBEN-084-24 S3aweed (XBOW's validation benchmarks, by XBOW) as an Isoloom spec:
+# a Next.js frontend with an S3-compatible storage service behind nginx.
+# The benchmark folder benchmarks/XBEN-084-24 of xbow-engineering/validation-benchmarks is vendored
+# unchanged in build/frontend/app/ (its s3/ in build/s3/app/), built by its own Dockerfiles; the overlay in build/frontend/ bakes in the fixed flag.
+# `isoloom generate`, then `isoloom run docker`.
+version: 1
+name: xben-084-s3aweed
+
+networks:
+  lab: { cidr: 10.61.127.0/24, internet: false }
+
+machines:
+  s3:
+    networks: { lab: 10 }
+    services: [{ port: 8333, name: web, http: true }]
+    resources: { cpus: 1, memory_mb: 512 }
+    docker:
+      build: build/s3
+
+  frontend:
+    networks: { lab: 20 }
+    services: [{ port: 3000, name: web, http: true }]
+    resources: { cpus: 1, memory_mb: 512 }
+    depends_on: [s3]
+    docker:
+      build: build/frontend
+
+  nginx:
+    networks: { lab: 30 }
+    services: [{ port: 80, name: web, http: true, publish: 80 }, { port: 8333, name: web-8333, http: true, publish: 8333 }]
+    resources: { cpus: 1, memory_mb: 512 }
+    depends_on: [s3, frontend]
+    docker:
+      build: build/frontend/app/nginx
+
+checks:
+  - name: the S3aweed page answers
+    http: http://nginx:80/
+    wait: 180
+  - name: the S3 service answers through nginx
+    script: checks/probe.sh
+    wait: 60
+
+message: |
+  S3aweed answers at http://localhost:{{ machines.nginx.services.0.publish }}/.
+  Find the gold bucket. Hint: search for hidden directories.

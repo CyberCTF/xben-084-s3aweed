@@ -1,0 +1,7 @@
+# The benchmark's s3/.dockerignore, its entries prefixed with app/ (the build context is this folder).
+app/**/node_modules/
+app/**/dist
+app/.git
+app/npm-debug.log
+app/.coverage
+app/.coverage.*

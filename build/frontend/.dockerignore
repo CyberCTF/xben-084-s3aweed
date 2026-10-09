@@ -1,0 +1,8 @@
+# The benchmark's frontend/.dockerignore, its entries prefixed with app/frontend/ (the build context is this folder).
+app/frontend/**/node_modules/
+app/frontend/**/dist
+app/frontend/.git
+app/frontend/npm-debug.log
+app/frontend/.coverage
+app/frontend/.coverage.*
+app/frontend/.next

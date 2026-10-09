@@ -1,0 +1,328 @@
+{
+  "generated_by_isoloom": "from isoloom.yml; don't edit: change the spec and run `isoloom generate` (`isoloom check` fails when this file is out of date)",
+  "resolved_version": 1,
+  "name": "xben-084-s3aweed",
+  "instance": null,
+  "inputs": [],
+  "networks": {
+    "lab": {
+      "cidr": "10.61.127.0/24",
+      "docker_cidr": "10.61.127.0/24",
+      "internet": false,
+      "gateway": null,
+      "gateway_address": "10.61.127.1",
+      "router": null,
+      "controller": "10.61.127.253"
+    }
+  },
+  "reach": [],
+  "machines": {
+    "s3": {
+      "access": false,
+      "supplied": false,
+      "shapes": [
+        "docker"
+      ],
+      "arch": "amd64",
+      "os": null,
+      "windows": false,
+      "addresses": {
+        "lab": "10.61.127.10"
+      },
+      "docker_addresses": {
+        "lab": "10.61.127.10"
+      },
+      "services": [
+        {
+          "port": 8333,
+          "name": "web",
+          "http": true,
+          "publish": null
+        }
+      ],
+      "depends_on": [],
+      "inputs": [],
+      "volumes": {},
+      "resources": {
+        "cpus": 1,
+        "memory_mb": 512,
+        "disk_gb": 20
+      },
+      "gateway_of": [],
+      "routes": [],
+      "default_gateway": null,
+      "offline": true
+    },
+    "frontend": {
+      "access": false,
+      "supplied": false,
+      "shapes": [
+        "docker"
+      ],
+      "arch": "amd64",
+      "os": null,
+      "windows": false,
+      "addresses": {
+        "lab": "10.61.127.20"
+      },
+      "docker_addresses": {
+        "lab": "10.61.127.20"
+      },
+      "services": [
+        {
+          "port": 3000,
+          "name": "web",
+          "http": true,
+          "publish": null
+        }
+      ],
+      "depends_on": [
+        "s3"
+      ],
+      "inputs": [],
+      "volumes": {},
+      "resources": {
+        "cpus": 1,
+        "memory_mb": 512,
+        "disk_gb": 20
+      },
+      "gateway_of": [],
+      "routes": [],
+      "default_gateway": null,
+      "offline": true
+    },
+    "nginx": {
+      "access": false,
+      "supplied": false,
+      "shapes": [
+        "docker"
+      ],
+      "arch": "amd64",
+      "os": null,
+      "windows": false,
+      "addresses": {
+        "lab": "10.61.127.30"
+      },
+      "docker_addresses": {
+        "lab": "10.61.127.30"
+      },
+      "services": [
+        {
+          "port": 80,
+          "name": "web",
+          "http": true,
+          "publish": 80
+        },
+        {
+          "port": 8333,
+          "name": "web-8333",
+          "http": true,
+          "publish": 8333
+        }
+      ],
+      "depends_on": [
+        "s3",
+        "frontend"
+      ],
+      "inputs": [],
+      "volumes": {},
+      "resources": {
+        "cpus": 1,
+        "memory_mb": 512,
+        "disk_gb": 20
+      },
+      "gateway_of": [],
+      "routes": [],
+      "default_gateway": null,
+      "offline": true
+    }
+  },
+  "start_order": [
+    "s3",
+    "frontend",
+    "nginx"
+  ],
+  "clones": {},
+  "tools": {},
+  "groups": {},
+  "router": null,
+  "controller": {
+    "addresses": {
+      "lab": "10.61.127.253"
+    }
+  },
+  "published": [
+    {
+      "machine": "nginx",
+      "port": 80,
+      "host_port": 80
+    },
+    {
+      "machine": "nginx",
+      "port": 8333,
+      "host_port": 8333
+    }
+  ],
+  "targets": {
+    "possible": [
+      "docker",
+      "hosted",
+      "docker-vm",
+      "cloud-docker",
+      "kubernetes"
+    ],
+    "generated": [
+      "docker",
+      "hosted",
+      "docker-vm",
+      "cloud-docker",
+      "kubernetes"
+    ],
+    "refused": {},
+    "not_possible": {
+      "hybrid": "only when some machines are containers and others are VMs",
+      "vagrant": "needs `vm:` on s3, frontend, nginx",
+      "proxmox": "needs `vm:` on s3, frontend, nginx",
+      "cloud-vm": "needs `vm:` on s3, frontend, nginx",
+      "external": "needs `external:` on s3, frontend, nginx"
+    }
+  },
+  "checks": {
+    "default_position": "networks",
+    "positions": [
+      {
+        "position": "networks",
+        "machine": null,
+        "runner": "isoloom-check",
+        "checks": [
+          {
+            "name": "the S3aweed page answers",
+            "derived": false,
+            "kind": "http",
+            "target": "http://nginx:80/",
+            "expect": "200",
+            "wait": 180
+          },
+          {
+            "name": "the S3 service answers through nginx",
+            "derived": false,
+            "kind": "script",
+            "target": "checks/probe.sh",
+            "expect": "",
+            "wait": 60
+          }
+        ]
+      },
+      {
+        "position": "s3",
+        "machine": "s3",
+        "runner": "isoloom-check-s3",
+        "checks": [
+          {
+            "name": "frontend:3000 from s3",
+            "derived": true,
+            "kind": "http",
+            "target": "http://10.61.127.20:3000/",
+            "expect": "any",
+            "wait": 30
+          },
+          {
+            "name": "nginx:80 from s3",
+            "derived": true,
+            "kind": "http",
+            "target": "http://10.61.127.30:80/",
+            "expect": "any",
+            "wait": 30
+          },
+          {
+            "name": "nginx:8333 from s3",
+            "derived": true,
+            "kind": "http",
+            "target": "http://10.61.127.30:8333/",
+            "expect": "any",
+            "wait": 30
+          },
+          {
+            "name": "no internet from s3",
+            "derived": true,
+            "kind": "http",
+            "target": "http://1.1.1.1/",
+            "expect": "blocked",
+            "wait": 0
+          }
+        ]
+      },
+      {
+        "position": "frontend",
+        "machine": "frontend",
+        "runner": "isoloom-check-frontend",
+        "checks": [
+          {
+            "name": "s3:8333 from frontend",
+            "derived": true,
+            "kind": "http",
+            "target": "http://10.61.127.10:8333/",
+            "expect": "any",
+            "wait": 30
+          },
+          {
+            "name": "nginx:80 from frontend",
+            "derived": true,
+            "kind": "http",
+            "target": "http://10.61.127.30:80/",
+            "expect": "any",
+            "wait": 30
+          },
+          {
+            "name": "nginx:8333 from frontend",
+            "derived": true,
+            "kind": "http",
+            "target": "http://10.61.127.30:8333/",
+            "expect": "any",
+            "wait": 30
+          },
+          {
+            "name": "no internet from frontend",
+            "derived": true,
+            "kind": "http",
+            "target": "http://1.1.1.1/",
+            "expect": "blocked",
+            "wait": 0
+          }
+        ]
+      },
+      {
+        "position": "nginx",
+        "machine": "nginx",
+        "runner": "isoloom-check-nginx",
+        "checks": [
+          {
+            "name": "s3:8333 from nginx",
+            "derived": true,
+            "kind": "http",
+            "target": "http://10.61.127.10:8333/",
+            "expect": "any",
+            "wait": 30
+          },
+          {
+            "name": "frontend:3000 from nginx",
+            "derived": true,
+            "kind": "http",
+            "target": "http://10.61.127.20:3000/",
+            "expect": "any",
+            "wait": 30
+          },
+          {
+            "name": "no internet from nginx",
+            "derived": true,
+            "kind": "http",
+            "target": "http://1.1.1.1/",
+            "expect": "blocked",
+            "wait": 0
+          }
+        ]
+      }
+    ]
+  },
+  "message": "S3aweed answers at http://localhost:80/.\nFind the gold bucket. Hint: search for hidden directories.\n"
+}
