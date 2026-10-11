@@ -3,7 +3,9 @@
   "resolved_version": 1,
   "name": "xben-084-s3aweed",
   "instance": null,
-  "inputs": [],
+  "inputs": [
+    "CTF_FLAG_MAIN"
+  ],
   "networks": {
     "lab": {
       "cidr": "10.61.127.0/24",
@@ -79,8 +81,12 @@
       "depends_on": [
         "s3"
       ],
-      "inputs": [],
-      "volumes": {},
+      "inputs": [
+        "CTF_FLAG_MAIN"
+      ],
+      "volumes": {
+        "ctf": "/ctf"
+      },
       "resources": {
         "cpus": 1,
         "memory_mb": 512,
@@ -184,7 +190,8 @@
       "vagrant": "needs `vm:` on s3, frontend, nginx",
       "proxmox": "needs `vm:` on s3, frontend, nginx",
       "cloud-vm": "needs `vm:` on s3, frontend, nginx",
-      "external": "needs `external:` on s3, frontend, nginx"
+      "external": "needs `external:` on s3, frontend, nginx",
+      "cloud-services": "left out by `targets:`"
     }
   },
   "checks": {

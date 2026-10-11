@@ -9,6 +9,9 @@ services:
   s3:
     build:
       context: ../../build/s3
+      labels:
+        isoloom.managed: 'true'
+        isoloom.environment: xben-084-s3aweed
     image: isoloom/xben-084-s3aweed-s3
     platform: linux/amd64
     hostname: s3
@@ -38,6 +41,8 @@ services:
           memory: 512M
     labels:
       isoloom.service.web: http:8333
+      isoloom.managed: 'true'
+      isoloom.environment: xben-084-s3aweed
     restart: unless-stopped
   s3-routes:
     image: alpine:3.20
@@ -59,15 +64,26 @@ services:
       s3:
         condition: service_started
     restart: unless-stopped
+    labels:
+      isoloom.managed: 'true'
+      isoloom.environment: xben-084-s3aweed
   frontend:
     build:
       context: ../../build/frontend
+      labels:
+        isoloom.managed: 'true'
+        isoloom.environment: xben-084-s3aweed
     image: isoloom/xben-084-s3aweed-frontend
     platform: linux/amd64
     hostname: frontend
     networks:
       lab:
         ipv4_address: 10.61.127.20
+    environment:
+      CTF_FLAG_MAIN: ${CTF_FLAG_MAIN:-}
+    volumes:
+    - frontend-ctf:/ctf
+    - isoloom-probe-amd64:/.isoloom-probe:ro
     healthcheck:
       test:
       - CMD
@@ -79,8 +95,6 @@ services:
       timeout: 3s
       retries: 60
       start_period: 10s
-    volumes:
-    - isoloom-probe-amd64:/.isoloom-probe:ro
     depends_on:
       isoloom-probe-amd64:
         condition: service_completed_successfully
@@ -95,6 +109,8 @@ services:
           memory: 512M
     labels:
       isoloom.service.web: http:3000
+      isoloom.managed: 'true'
+      isoloom.environment: xben-084-s3aweed
     restart: unless-stopped
   frontend-routes:
     image: alpine:3.20
@@ -116,9 +132,35 @@ services:
       frontend:
         condition: service_started
     restart: unless-stopped
+    labels:
+      isoloom.managed: 'true'
+      isoloom.environment: xben-084-s3aweed
+  frontend-init-1:
+    image: isoloom/xben-084-s3aweed-frontend
+    entrypoint:
+    - /bin/sh
+    - /isoloom/init/flag.sh
+    volumes:
+    - ../../ctf/flag.sh:/isoloom/init/flag.sh:ro
+    - frontend-ctf:/ctf
+    network_mode: service:frontend
+    environment:
+      CTF_FLAG_MAIN: ${CTF_FLAG_MAIN:-}
+    depends_on:
+      frontend:
+        condition: service_healthy
+      frontend-routes:
+        condition: service_healthy
+    restart: no
+    labels:
+      isoloom.managed: 'true'
+      isoloom.environment: xben-084-s3aweed
   nginx:
     build:
       context: ../../build/frontend/app/nginx
+      labels:
+        isoloom.managed: 'true'
+        isoloom.environment: xben-084-s3aweed
     image: isoloom/xben-084-s3aweed-nginx
     platform: linux/amd64
     hostname: nginx
@@ -150,6 +192,8 @@ services:
         condition: service_healthy
       frontend:
         condition: service_healthy
+      frontend-init-1:
+        condition: service_completed_successfully
       frontend-routes:
         condition: service_healthy
     deploy:
@@ -160,6 +204,8 @@ services:
     labels:
       isoloom.service.web: http:80
       isoloom.service.web-8333: http:8333
+      isoloom.managed: 'true'
+      isoloom.environment: xben-084-s3aweed
     restart: unless-stopped
   nginx-routes:
     image: alpine:3.20
@@ -181,6 +227,9 @@ services:
       nginx:
         condition: service_started
     restart: unless-stopped
+    labels:
+      isoloom.managed: 'true'
+      isoloom.environment: xben-084-s3aweed
   isoloom-check:
     image: curlimages/curl:8.11.1
     profiles:
@@ -204,12 +253,17 @@ services:
         condition: service_healthy
       frontend:
         condition: service_healthy
+      frontend-init-1:
+        condition: service_completed_successfully
       frontend-routes:
         condition: service_healthy
       nginx:
         condition: service_healthy
       nginx-routes:
         condition: service_healthy
+    labels:
+      isoloom.managed: 'true'
+      isoloom.environment: xben-084-s3aweed
   isoloom-check-s3:
     image: curlimages/curl:8.11.1
     profiles:
@@ -227,12 +281,17 @@ services:
         condition: service_healthy
       frontend:
         condition: service_healthy
+      frontend-init-1:
+        condition: service_completed_successfully
       frontend-routes:
         condition: service_healthy
       nginx:
         condition: service_healthy
       nginx-routes:
         condition: service_healthy
+    labels:
+      isoloom.managed: 'true'
+      isoloom.environment: xben-084-s3aweed
   isoloom-check-frontend:
     image: curlimages/curl:8.11.1
     profiles:
@@ -250,12 +309,17 @@ services:
         condition: service_healthy
       frontend:
         condition: service_healthy
+      frontend-init-1:
+        condition: service_completed_successfully
       frontend-routes:
         condition: service_healthy
       nginx:
         condition: service_healthy
       nginx-routes:
         condition: service_healthy
+    labels:
+      isoloom.managed: 'true'
+      isoloom.environment: xben-084-s3aweed
   isoloom-check-nginx:
     image: curlimages/curl:8.11.1
     profiles:
@@ -273,12 +337,17 @@ services:
         condition: service_healthy
       frontend:
         condition: service_healthy
+      frontend-init-1:
+        condition: service_completed_successfully
       frontend-routes:
         condition: service_healthy
       nginx:
         condition: service_healthy
       nginx-routes:
         condition: service_healthy
+    labels:
+      isoloom.managed: 'true'
+      isoloom.environment: xben-084-s3aweed
   isoloom-probe-amd64:
     image: busybox:1.37.0-musl
     platform: linux/amd64
@@ -290,11 +359,24 @@ services:
     - isoloom-probe-amd64:/probe
     network_mode: none
     restart: no
+    labels:
+      isoloom.managed: 'true'
+      isoloom.environment: xben-084-s3aweed
 networks:
   lab:
     ipam:
       config:
       - subnet: 10.61.127.0/24
         gateway: 10.61.127.1
+    labels:
+      isoloom.managed: 'true'
+      isoloom.environment: xben-084-s3aweed
 volumes:
-  isoloom-probe-amd64: {}
+  frontend-ctf:
+    labels:
+      isoloom.managed: 'true'
+      isoloom.environment: xben-084-s3aweed
+  isoloom-probe-amd64:
+    labels:
+      isoloom.managed: 'true'
+      isoloom.environment: xben-084-s3aweed
